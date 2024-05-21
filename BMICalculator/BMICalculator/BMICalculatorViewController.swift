@@ -77,7 +77,7 @@ class BMICalculatorViewController: UIViewController {
         if height.allSatisfy({ $0.isNumber }) {
             self.height = Double(height)!
         } else {
-            self.showAlert(title: "알림", message: "비정상적인 값이 입력되었습니다.")
+            self.showAlert(title: "알림", message: "숫자만 입력해주세요.")
             self.heightTextField.text = ""
             self.height = 0
         }
@@ -93,7 +93,7 @@ class BMICalculatorViewController: UIViewController {
         if weight.allSatisfy({ $0.isNumber }) {
             self.weight = Double(weight)!
         } else {
-            self.showAlert(title: "알림", message: "비정상적인 값이 입력되었습니다.")
+            self.showAlert(title: "알림", message: "숫자만 입력해주세요.")
             self.weightTextField.text = ""
             self.weight = 0
         }
