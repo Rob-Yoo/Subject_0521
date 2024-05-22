@@ -21,12 +21,18 @@ class BMICalculatorViewController: UIViewController {
     @IBOutlet private var weightAskingLabel: UILabel!
     @IBOutlet private var blindButton: UIButton!
     @IBOutlet private var weightTextField: UITextField!
+    
+    @IBOutlet var nicknameAskingLabel: UILabel!
+    @IBOutlet var nicknameTextField: UITextField!
+    
     @IBOutlet private var randomCalculateButton: UIButton!
     
     @IBOutlet private var resultButton: UIButton!
-
+    @IBOutlet var resetButton: UIButton!
+    
     private var height: Double = 0
     private var weight: Double = 0
+    private var nickname: String = ""
     
     private var isValidateValue: Bool {
         if (self.weight < 1 ||
@@ -52,15 +58,8 @@ class BMICalculatorViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.cofigureTitleLabel()
-        self.configureSubTitleLabel()
-        self.configureCharacterImageView()
-        self.configureAskingLabel()
-        self.configureHeightTextField()
-        self.configureWeightAskingView()
-        self.configureWeightTextField()
-        self.configureRandomCalculateButton()
-        self.configureResultButton()
+        self.configureSubviews()
+        self.showData()
     }
     
     @IBAction func keboardDismiss() {
@@ -77,7 +76,7 @@ class BMICalculatorViewController: UIViewController {
         if height.allSatisfy({ $0.isNumber }) {
             self.height = Double(height)!
         } else {
-            self.showAlert(title: "알림", message: "숫자만 입력해주세요.")
+            self.showReadOnlyAlert(title: "알림", message: "숫자만 입력해주세요.")
             self.heightTextField.text = ""
             self.height = 0
         }
@@ -93,10 +92,21 @@ class BMICalculatorViewController: UIViewController {
         if weight.allSatisfy({ $0.isNumber }) {
             self.weight = Double(weight)!
         } else {
-            self.showAlert(title: "알림", message: "숫자만 입력해주세요.")
+            self.showReadOnlyAlert(title: "알림", message: "숫자만 입력해주세요.")
             self.weightTextField.text = ""
             self.weight = 0
         }
+    }
+    
+    @IBAction func nicknameTextFieldChanged(_ sender: UITextField) {
+        guard let nickname = sender.text else {
+            return
+        }
+        
+        self.nickname = nickname
+    }
+    
+    @IBAction func nicknameTextFieldDidOnExit(_ sender: UITextField) {
     }
     
     @IBAction func blindButtonTapped(_ sender: UIButton) {
@@ -113,18 +123,40 @@ class BMICalculatorViewController: UIViewController {
 
         if (self.isValidateValue) {
             self.showResult()
+            self.saveData()
         } else if (hValue.isEmpty) {
-            self.showAlert(title: "알림", message: "키를 입력해주세요.")
+            self.showReadOnlyAlert(title: "알림", message: "키를 입력해주세요.")
         } else if (wValue.isEmpty) {
-            self.showAlert(title: "알림", message: "몸무게를 입력해주세요.")
+            self.showReadOnlyAlert(title: "알림", message: "몸무게를 입력해주세요.")
         } else {
-            self.showAlert(title: "알림", message: "너무 크거나 작은 값이 입력되었습니다.\n다시 확인해주세요.")
+            self.showReadOnlyAlert(title: "알림", message: "너무 크거나 작은 값이 입력되었습니다.\n다시 확인해주세요.")
         }
     }
+    
+    @IBAction func resetButtonTapped(_ sender: UIButton) {
+        self.showActionAlert(title: "알림", message: "정말 초기화를 진행하시겠습니까?")
+    }
+    
 }
 
 //MARK: - Configure Subviews
 extension BMICalculatorViewController {
+    private func configureSubviews() {
+        self.cofigureTitleLabel()
+        self.configureSubTitleLabel()
+        self.configureCharacterImageView()
+        
+        self.configureAskingLabel()
+        self.configureHeightTextField()
+        self.configureWeightAskingView()
+        self.configureWeightTextField()
+        self.configureNicknameTextField()
+
+        self.configureRandomCalculateButton()
+        self.configureResultButton()
+        self.configureResetButton()
+    }
+    
     private func cofigureTitleLabel() {
         self.titleLabel.text = "BMI Calculator"
         self.titleLabel.textColor = .black
@@ -148,6 +180,7 @@ extension BMICalculatorViewController {
     private func configureAskingLabel() {
         self.designAskingLabel(label: self.heightAskingLabel, text: "키가 어떻게 되시나요?")
         self.designAskingLabel(label: self.weightAskingLabel, text: "몸무게는 어떻게 되시나요?")
+        self.designAskingLabel(label: self.nicknameAskingLabel, text: "닉네임")
     }
     
     private func configureHeightTextField() {
@@ -168,7 +201,11 @@ extension BMICalculatorViewController {
         self.blindButton.setImage(.init(systemName: "eye.slash"), for: .normal)
         self.blindButton.tintColor = .lightGray
         
-        self.designTextField(textField: self.weightTextField)
+        self.designTextField(textField: self.weightTextField, hasRoundedCorner: false)
+    }
+    
+    private func configureNicknameTextField() {
+        self.designTextField(textField: self.nicknameTextField, keyboardType: .default)
     }
     
     private func configureRandomCalculateButton() {
@@ -178,10 +215,11 @@ extension BMICalculatorViewController {
     }
     
     private func configureResultButton() {
-        self.resultButton.setTitle("결과 확인", for: .normal)
-        self.resultButton.setTitleColor(.white, for: .normal)
-        self.resultButton.backgroundColor = .purple
-        self.resultButton.layer.cornerRadius = 15
+        self.designButton(btn: self.resultButton, title: "결과 확인", bgColor: .purple)
+    }
+    
+    private func configureResetButton() {
+        self.designButton(btn: self.resetButton, title: "초기화", bgColor: .red)
     }
 }
 
@@ -194,7 +232,7 @@ extension BMICalculatorViewController {
         label.font = .systemFont(ofSize: 13, weight: .medium)
     }
     
-    private func designTextField(textField: UITextField) {
+    private func designTextField(textField: UITextField, hasRoundedCorner: Bool = true, keyboardType: UIKeyboardType = .numberPad) {
         let emptyView = UIView(frame: .init(x: 0, y: 0, width: 30, height: 30))
         
         textField.leftView = emptyView
@@ -202,12 +240,39 @@ extension BMICalculatorViewController {
         textField.keyboardType = .numberPad
         textField.borderStyle = .none
         textField.tintColor = .black
+        textField.keyboardType = keyboardType
+        
+        if (hasRoundedCorner) {
+            textField.layer.cornerRadius = 15
+            textField.layer.borderWidth = 2
+            textField.layer.borderColor = UIColor.darkGray.cgColor
+        }
     }
     
-    private func showAlert(title: String, message: String) {
+    private func designButton(btn: UIButton, title: String, bgColor: UIColor) {
+        btn.setTitle(title, for: .normal)
+        btn.setTitleColor(.white, for: .normal)
+        btn.backgroundColor = bgColor
+        btn.layer.cornerRadius = 15
+    }
+    
+    private func showReadOnlyAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         let ok = UIAlertAction(title: "확인", style: .default)
         
+        alert.addAction(ok)
+        self.present(alert, animated: true)
+    }
+    
+    private func showActionAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let cancel = UIAlertAction(title: "취소", style: .cancel)
+        let ok = UIAlertAction(title: "확인", style: .default) { _ in
+            self.resetData()
+            self.showData(needLoad: false)
+        }
+        
+        alert.addAction(cancel)
         alert.addAction(ok)
         self.present(alert, animated: true)
     }
@@ -215,11 +280,21 @@ extension BMICalculatorViewController {
 
 //MARK: - Presentation Logic
 extension BMICalculatorViewController {
+    private func showData(needLoad: Bool = true) {
+        if (needLoad) {
+            self.loadData()
+        }
+        
+        self.heightTextField.text = (self.height == 0) ? "" : String(self.height)
+        self.weightTextField.text = (self.weight == 0) ? "" : String(self.weight)
+        self.nicknameTextField.text = self.nickname
+    }
+
     private func showResult() {
         let bmi = self.weight / pow((self.height / 100), 2)
         let stringBMI = String(format: "%.2f", bmi)
         
-        self.showAlert(title: "BMI 지수 결과", message: stringBMI)
+        self.showReadOnlyAlert(title: "BMI 지수 결과", message: stringBMI)
     }
     
     private func setRandomValue() {
@@ -242,4 +317,33 @@ extension BMICalculatorViewController {
         self.weightTextField.isSecureTextEntry = false
     }
 
+}
+
+//MARK: - Data Handling
+extension BMICalculatorViewController {
+    private func saveData() {
+        UserDefaults.standard.set(self.height, forKey: "height")
+        UserDefaults.standard.set(self.weight, forKey: "weight")
+        UserDefaults.standard.set(self.nickname, forKey: "nickname")
+    }
+
+    private func loadData() {
+        let savedHeight = UserDefaults.standard.double(forKey: "height")
+        let savedWeight = UserDefaults.standard.double(forKey: "weight")
+        let savedNickname = UserDefaults.standard.string(forKey: "nickname") ?? ""
+        
+        self.height = savedHeight
+        self.weight = savedWeight
+        self.nickname = savedNickname
+    }
+    
+    private func resetData() {
+        UserDefaults.standard.removeObject(forKey: "height")
+        UserDefaults.standard.removeObject(forKey: "weight")
+        UserDefaults.standard.removeObject(forKey: "nickname")
+        
+        self.height = 0
+        self.weight = 0
+        self.nickname = ""
+    }
 }
